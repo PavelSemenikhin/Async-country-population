@@ -1,16 +1,29 @@
+import logging
+import os
+
 import aiohttp
 import asyncio
 from aiohttp import ClientError
+
+
+logger = logging.getLogger(__name__)
+
+WIKI_URL = os.getenv(
+    "WIKI_URL",
+    "https://en.wikipedia.org/w/index.php?title=List_of_countries_by_population_(United_Nations)&oldid=1215058959",
+)
 
 
 class RequestError(Exception):
     pass
 
 
-async def fetch_html(url: str, timeout: int = 10) -> str:
+async def fetch_html(url: str = WIKI_URL, timeout: int = 10) -> str:
     """
     Downloads HTML from the given URL asynchronously.
     """
+
+    logger.info(f"Fetching HTML from {url}")
 
     headers = {"User-Agent": "Mozilla/5.0 (compatible; PopulationBot/1.0)"}
 
@@ -18,9 +31,11 @@ async def fetch_html(url: str, timeout: int = 10) -> str:
         async with aiohttp.ClientSession(headers=headers) as session:
             async with session.get(url, timeout=timeout) as response:
                 if response.status != 200:
+                    logger.error(f"Unexpected status code: {response.status}")
                     raise RequestError(f"Unexpected status code: {response.status}")
 
                 return await response.text()
 
     except (asyncio.TimeoutError, ClientError) as e:
+        logger.error(f"Failed to fetch HTML: {e}")
         raise RequestError(f"Failed to fetch HTML: {e}")
