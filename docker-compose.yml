@@ -1,0 +1,39 @@
+services:
+  pg:
+    image: postgres:15
+    restart: always
+    container_name: countries_pg
+    env_file:
+      - .env
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  get_data:
+    build: .
+    container_name: get_data_service
+    command: ["python", "app/scripts/run_get_data.py"]
+    depends_on:
+      pg:
+        condition: service_healthy
+    env_file:
+      - .env
+
+  print_data:
+    build: .
+    container_name: print_data_service
+    command: ["python", "app/scripts/run_print_data.py"]
+    depends_on:
+      pg:
+        condition: service_healthy
+    env_file:
+      - .env
+
+volumes:
+  pgdata:
