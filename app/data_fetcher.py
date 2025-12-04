@@ -23,6 +23,17 @@ async def fetch_html(url: str = WIKI_URL, timeout: int = 10) -> str:
     Downloads HTML from the given URL asynchronously.
     """
 
+    source = os.getenv("SOURCE", "wiki")
+
+    if source == "wiki":
+        url = os.getenv("WIKI_URL")
+
+    elif source == "stat_times":
+        url = os.getenv("STAT_URL")
+
+    else:
+        raise ValueError(f"Unknown SOURCE {source}")
+
     logger.info(f"Fetching HTML from {url}")
 
     headers = {"User-Agent": "Mozilla/5.0 (compatible; PopulationBot/1.0)"}
