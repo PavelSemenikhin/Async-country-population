@@ -1,11 +1,12 @@
-import asyncio
+import os
 import logging
+import asyncio
 
 from app.data_fetcher import fetch_html
 from app.db_services import DatabaseService
 from app.db_config import init_db, AsyncSessionLocal, engine
-from app.parser import parse_population_table
 
+from app.parser import WikiParser, StatParser
 
 logging.basicConfig(
     level=logging.INFO,
@@ -21,7 +22,20 @@ async def main():
     try:
         html = await fetch_html()
 
-        parsed = parse_population_table(html)
+        source = os.getenv("SOURCE", "wiki")
+
+        if source == "wiki":
+            parser = WikiParser()
+
+        elif source == "stat_times":
+            parser = StatParser()
+
+        else:
+            raise ValueError(
+                f"Unknown source = {source} please choose from wiki or stat_times."
+            )
+
+        parsed = parser.parse(html)
 
         async with AsyncSessionLocal() as session:
             service = DatabaseService(session)
